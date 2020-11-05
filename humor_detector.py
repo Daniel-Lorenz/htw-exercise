@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 import logging
-import gzip
-import tarfile
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
