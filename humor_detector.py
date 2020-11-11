@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 import logging
+import requests
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -12,7 +13,8 @@ from tensorflow.keras.preprocessing.text import Tokenizer
 
 class HumorDetector:
 
-    def __init__(self) -> None:
+    def __init__(self, student) -> None:
+        self.student = student
         self.embeddings_index = {}
         self.__build_embedding_index__()
         self.logging = self.__prepare_logger__()
@@ -21,15 +23,16 @@ class HumorDetector:
         self.labels, self.texts = self.__load_labels_and_texts__()
         self.data, self.embedding_dim, self.embedding_matrix, self.labels = self.__preprocess_data__(self.labels,
                                                                                                      self.texts)
-        self.logging.info("This is your HumorDetector. I am ready to work!")
+        self.logging.info("Hello " + student + "!\n" + "This is your HumorDetector. I am ready to work!")
 
     def __build_embedding_index__(self):
-        filename =["glove.6B/glove.6B.100d.split.0.txt", "glove.6B/glove.6B.100d.split.1.txt", "glove.6B/glove.6B.100d.split.2.txt",
-                   "glove.6B/glove.6B.100d.split.3.txt"]
+        filename = ["glove.6B/glove.6B.100d.split.0.txt", "glove.6B/glove.6B.100d.split.1.txt",
+                    "glove.6B/glove.6B.100d.split.2.txt",
+                    "glove.6B/glove.6B.100d.split.3.txt"]
         content = ""
         for i in range(len(filename)):
             with open(filename[i], encoding="utf8") as file:
-                content = content+file.read()
+                content = content + file.read()
         content = content.split("\n")
         content = content[0:-1]
         for line in content:
@@ -60,6 +63,7 @@ class HumorDetector:
 
     def __train_and_plot_results__(self, data, labels, model):
         history = self.__compile_and_fit_model__(data, labels, model)
+        self.send_results(history)
         self.plot_result(history)
 
     def __compile_and_fit_model__(self, data, labels, model):
@@ -191,3 +195,20 @@ class HumorDetector:
         predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
         precision = true_positives / (predicted_positives + K.epsilon())
         return precision
+
+    def send_results(self, history):
+        self.logging.debug("sending request")
+        url = 'https://dev-appl-cust-htw-results-htw-results-ui.cfapps.eu10.hana.ondemand.com/result/Results'
+        acc = history.history['acc']
+        val_acc = history.history['val_acc']
+        loss = history.history['loss']
+        val_loss = history.history['val_loss']
+        json = {
+            'student': self.student,
+            'loss': loss[-1],
+            'acc': acc[-1],
+            'val_acc': val_acc[-1],
+            'val_loss': val_loss[-1]
+        }
+        x = requests.post(url, json=json)
+        self.logging.debug("sent request: " + str(x.content))

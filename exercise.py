@@ -5,7 +5,7 @@ from tensorflow.python.keras.layers import GlobalMaxPooling1D
 from tensorflow.keras.layers import Embedding, Dense, GRU, Conv1D, LSTM, MaxPooling1D, SimpleRNN, Flatten, Dropout
 from humor_detector import HumorDetector
 
-detector = HumorDetector()
+detector = HumorDetector(student="Daniel Lorenz")
 embedding_dim = detector.embedding_dim
 embedding_matrix = detector.embedding_matrix
 vocabulary_size = detector.vocabulary_size
